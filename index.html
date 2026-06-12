@@ -9,7 +9,7 @@
 body{
     font-family:Arial,sans-serif;
     max-width:600px;
-    margin:20px auto;
+    margin:5px auto 20px auto;
     padding:15px;
     text-align:center;
 }
@@ -19,10 +19,11 @@ textarea{
     height:100px;
     padding:10px;
     box-sizing:border-box;
+    margin-top:60px;
 }
 
 button{
-    padding:12px 20px;
+    padding:12px 15px;
     margin:5px;
     border:none;
     border-radius:8px;
@@ -46,7 +47,7 @@ button{
 }
 
 #reader{
-    margin-top:20px;
+    margin-top:7px;
     width:100%;
 }
 
@@ -55,12 +56,21 @@ button{
     font-weight:bold;
     word-break:break-all;
 }
+#resultado button{
+    padding:10px 16px;
+    border:none;
+    border-radius:8px;
+    cursor:pointer;
+    margin-top:10px;
+    font-size:16px;
+}
 </style>
 </head>
 <body>
 
-<h2>Gerador de QR Code Profissional</h2>
-
+<div style="background:lightblue; position:fixed; top:0; left:0; right:0">
+<h2 style="color:blue; padding:2px 16px">Gerador de QR Code Profissional</h2>
+</div>
 <textarea id="texto"
 placeholder="Digite texto, link, PIX, telefone..."></textarea>
 
@@ -268,7 +278,7 @@ document
     html5QrCode =
     new Html5Qrcode("reader");
 
-   html5QrCode.start(
+    html5QrCode.start(
 {
     facingMode:"environment"
 },
@@ -276,28 +286,152 @@ document
     fps:10,
     qrbox:250
 },
-async (textoLido)=>{
+async (textoLido) => {
 
-    document
-    .getElementById("resultado")
-    .textContent =
-    "Conteúdo: " + textoLido;
+    const resultado =
+    document.getElementById("resultado");
 
-    if(navigator.vibrate){
+    if (navigator.vibrate) {
         navigator.vibrate(200);
+    }
+
+    resultado.innerHTML = "";
+
+    const titulo =
+    document.createElement("h3");
+
+    const conteudo =
+    document.createElement("div");
+
+    const botao =
+    document.createElement("button");
+
+    conteudo.style.wordBreak = "break-all";
+    conteudo.style.marginBottom = "10px";
+
+    // LINK
+    if (
+        textoLido.startsWith("http://") ||
+        textoLido.startsWith("https://")
+    ) {
+
+        titulo.textContent = "🌐 Link";
+        conteudo.textContent = textoLido;
+
+        botao.textContent = "Abrir Link";
+
+        botao.onclick = () => {
+            window.open(textoLido, "_blank");
+        };
+
+        resultado.append(
+            titulo,
+            conteudo,
+            botao
+        );
+    }
+
+    // TELEFONE
+    else if (textoLido.startsWith("tel:")) {
+
+        titulo.textContent = "📞 Telefone";
+
+        conteudo.textContent =
+        textoLido.replace("tel:", "");
+
+        botao.textContent = "Ligar";
+
+        botao.onclick = () => {
+            window.location.href = textoLido;
+        };
+
+        resultado.append(
+            titulo,
+            conteudo,
+            botao
+        );
+    }
+
+    // EMAIL
+    else if (textoLido.startsWith("mailto:")) {
+
+        titulo.textContent = "✉️ E-mail";
+
+        conteudo.textContent =
+        textoLido.replace("mailto:", "");
+
+        botao.textContent = "Enviar E-mail";
+
+        botao.onclick = () => {
+            window.location.href = textoLido;
+        };
+
+        resultado.append(
+            titulo,
+            conteudo,
+            botao
+        );
+    }
+
+    // PIX COPIA E COLA
+    else if (
+        textoLido.startsWith("000201") ||
+        textoLido.includes("BR.GOV.BCB.PIX")
+    ) {
+
+        titulo.textContent = "💰 PIX";
+
+        conteudo.textContent = textoLido;
+
+        botao.textContent = "Copiar PIX";
+
+        botao.onclick = async () => {
+
+            await navigator.clipboard.writeText(
+                textoLido
+            );
+
+            alert("PIX copiado!");
+        };
+
+        resultado.append(
+            titulo,
+            conteudo,
+            botao
+        );
+    }
+
+    // TEXTO COMUM
+    else {
+
+        titulo.textContent = "📄 Texto";
+
+        conteudo.textContent = textoLido;
+
+        botao.textContent = "Copiar";
+
+        botao.onclick = async () => {
+
+            await navigator.clipboard.writeText(
+                textoLido
+            );
+
+            alert("Texto copiado!");
+        };
+
+        resultado.append(
+            titulo,
+            conteudo,
+            botao
+        );
     }
 
     await html5QrCode.stop();
     scannerAtivo = false;
-
-    if(textoLido.startsWith("http")){
-        window.open(textoLido, "_blank");
-    }
-
+}
 });
 scannerAtivo = true;
 });
-
 
 </script>
 
