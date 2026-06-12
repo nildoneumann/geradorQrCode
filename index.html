@@ -283,10 +283,6 @@ async (textoLido)=>{
     .textContent =
     "Conteúdo: " + textoLido;
 
-    if(navigator.vibrate){
-        navigator.vibrate(200);
-    }
-
     await html5QrCode.stop();
     scannerAtivo = false;
 
