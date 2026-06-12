@@ -268,24 +268,32 @@ document
     html5QrCode =
     new Html5Qrcode("reader");
 
-    html5QrCode.start(
-    {
-        facingMode:"environment"
-    },
-    {
-        fps:10,
-        qrbox:250
-    },
-    (textoLido)=>{
+   html5QrCode.start(
+{
+    facingMode:"environment"
+},
+{
+    fps:10,
+    qrbox:250
+},
+async (textoLido)=>{
 
-        document
-        .getElementById("resultado")
-        .textContent =
-        "Conteúdo: " + textoLido;
+    document
+    .getElementById("resultado")
+    .textContent =
+    "Conteúdo: " + textoLido;
 
-    });
+    if(navigator.vibrate){
+        navigator.vibrate(200);
+    }
 
-    scannerAtivo = true;
+    await html5QrCode.stop();
+    scannerAtivo = false;
+
+    if(textoLido.startsWith("http")){
+        window.open(textoLido, "_blank");
+    }
+
 });
 
 </script>
