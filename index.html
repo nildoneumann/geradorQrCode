@@ -23,18 +23,420 @@ textarea{
 }
 
 button{
-    padding:12px 15px;
-    margin:5px;
+    padding:12px 12px;
+    margin:3px 2px;
     border:none;
     border-radius:8px;
     cursor:pointer;
 }
 
-#gerar{background:#2196F3;color:#fff;}
+#gerar{background:#00008b;color:#fff; font-weight:bold;}
 #baixarPNG{background:#4CAF50;color:#fff;}
 #baixarSVG{background:#673AB7;color:#fff;}
-#lerQR{background:#FF9800;color:#fff;}
+#lerQR{background:#b81414;color:#fff;font-weight:bold;}
 
+#qrcode{
+    margin-top:20px;
+    display:flex;
+    justify-content:center;
+}
+
+#qrcode svg{
+    width:300px;
+    height:300px;
+}
+
+#reader{
+    margin-top:2px;
+    width:100%;
+}
+
+#resultado{
+    margin-top:15px;
+    font-weight:bold;
+    word-break:break-all;
+}
+#resultado button{
+    padding:10px 16px;
+    border:none;
+    border-radius:8px;
+    cursor:pointer;
+    margin-top:10px;
+    font-size:16px;
+}
+</style>
+</head>
+<body>
+
+<div style="background:lightblue; position:fixed; top:0; left:0; right:0">
+<h2 style="color:blue; padding:2px auto">Gerador de QR Code Profissional</h2>
+</div>
+<textarea id="texto"
+placeholder="Digite texto, link, PIX, telefone..."></textarea>
+
+<br>
+
+<label style="font-weight:bold">
+Logo (opcional):
+<input type="file" id="logoInput" accept="image/*">
+</label>
+
+<br><br>
+
+<button id="gerar">Gerar QR</button>
+<button id="baixarPNG">Salvar PNG</button>
+<button id="baixarSVG">Salvar SVG</button>
+<button id="lerQR">Ler QR</button>
+
+<div id="qrcode"></div>
+
+<div id="reader"></div>
+
+<div id="resultado"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+<script src="https://unpkg.com/html5-qrcode"></script>
+
+<script>
+
+let svgAtual = null;
+let logoData = null;
+
+document
+.getElementById("logoInput")
+.addEventListener("change", function(e){
+
+    const arquivo = e.target.files[0];
+
+    if(!arquivo) return;
+
+    const leitor = new FileReader();
+
+    leitor.onload = function(evt){
+        logoData = evt.target.result;
+    };
+
+    leitor.readAsDataURL(arquivo);
+});
+
+document
+.getElementById("gerar")
+.addEventListener("click", gerarQR);
+
+function gerarQR(){
+
+    const texto =
+    document.getElementById("texto").value.trim();
+
+    if(!texto){
+        alert("Digite algum conteúdo.");
+        return;
+    }
+
+    const qr = qrcode(0,"H");
+
+    qr.addData(texto);
+    qr.make();
+
+    document.getElementById("qrcode").innerHTML =
+    qr.createSvgTag({
+        scalable:true
+    });
+
+    svgAtual =
+    document.querySelector("#qrcode svg");
+
+    if(logoData){
+
+        const img =
+        document.createElementNS(
+        "http://www.w3.org/2000/svg",
+        "image"
+        );
+
+        img.setAttributeNS(
+        "http://www.w3.org/1999/xlink",
+        "href",
+        logoData
+        );
+
+        img.setAttribute("x","40%");
+        img.setAttribute("y","40%");
+        img.setAttribute("width","20%");
+        img.setAttribute("height","20%");
+
+        svgAtual.appendChild(img);
+    }
+}
+
+document
+.getElementById("baixarSVG")
+.addEventListener("click", ()=>{
+
+    if(!svgAtual){
+        alert("Gere um QR primeiro.");
+        return;
+    }
+
+    const blob = new Blob(
+        [svgAtual.outerHTML],
+        {type:"image/svg+xml"}
+    );
+
+    const link =
+    document.createElement("a");
+
+    link.href =
+    URL.createObjectURL(blob);
+
+    link.download = "qrcode.svg";
+
+    link.click();
+});
+
+document
+.getElementById("baixarPNG")
+.addEventListener("click", ()=>{
+
+    if(!svgAtual){
+        alert("Gere um QR primeiro.");
+        return;
+    }
+
+    const svgData =
+    new XMLSerializer()
+    .serializeToString(svgAtual);
+
+    const canvas =
+    document.createElement("canvas");
+
+    canvas.width = 2000;
+    canvas.height = 2000;
+
+    const ctx =
+    canvas.getContext("2d");
+
+    const img = new Image();
+
+    img.onload = ()=>{
+
+        ctx.fillStyle="#fff";
+        ctx.fillRect(
+            0,
+            0,
+            canvas.width,
+            canvas.height
+        );
+
+        ctx.drawImage(
+            img,
+            0,
+            0,
+            canvas.width,
+            canvas.height
+        );
+
+        const link =
+        document.createElement("a");
+
+        link.download =
+        "qrcode-alta-resolucao.png";
+
+        link.href =
+        canvas.toDataURL("image/png");
+
+        link.click();
+    };
+
+    img.src =
+    "data:image/svg+xml;base64," +
+    btoa(unescape(
+    encodeURIComponent(svgData)
+    ));
+});
+
+let scannerAtivo = false;
+let html5QrCode;
+
+document
+.getElementById("lerQR")
+.addEventListener("click", async ()=>{
+
+    if(scannerAtivo){
+
+        await html5QrCode.stop();
+
+        document
+        .getElementById("reader")
+        .innerHTML = "";
+
+        scannerAtivo = false;
+
+        return;
+    }
+
+    html5QrCode =
+    new Html5Qrcode("reader");
+
+    html5QrCode.start(
+{
+    facingMode:"environment"
+},
+{
+    fps:10,
+    qrbox:250
+},
+async (textoLido) => {
+
+    const resultado =
+    document.getElementById("resultado");
+
+    if (navigator.vibrate) {
+        navigator.vibrate(200);
+    }
+
+    resultado.innerHTML = "";
+
+    const titulo =
+    document.createElement("h3");
+
+    const conteudo =
+    document.createElement("div");
+
+    const botao =
+    document.createElement("button");
+
+    conteudo.style.wordBreak = "break-all";
+    conteudo.style.marginBottom = "10px";
+
+    // LINK
+    if (
+        textoLido.startsWith("http://") ||
+        textoLido.startsWith("https://")
+    ) {
+
+        titulo.textContent = "🌐 Link";
+        conteudo.textContent = textoLido;
+
+        botao.textContent = "Abrir Link";
+
+        botao.onclick = () => {
+            window.open(textoLido, "_blank");
+        };
+
+        resultado.append(
+            titulo,
+            conteudo,
+            botao
+        );
+    }
+
+    // TELEFONE
+    else if (textoLido.startsWith("tel:")) {
+
+        titulo.textContent = "📞 Telefone";
+
+        conteudo.textContent =
+        textoLido.replace("tel:", "");
+
+        botao.textContent = "Ligar";
+
+        botao.onclick = () => {
+            window.location.href = textoLido;
+        };
+
+        resultado.append(
+            titulo,
+            conteudo,
+            botao
+        );
+    }
+
+    // EMAIL
+    else if (textoLido.startsWith("mailto:")) {
+
+        titulo.textContent = "✉️ E-mail";
+
+        conteudo.textContent =
+        textoLido.replace("mailto:", "");
+
+        botao.textContent = "Enviar E-mail";
+
+        botao.onclick = () => {
+            window.location.href = textoLido;
+        };
+
+        resultado.append(
+            titulo,
+            conteudo,
+            botao
+        );
+    }
+
+    // PIX COPIA E COLA
+    else if (
+        textoLido.startsWith("000201") ||
+        textoLido.includes("BR.GOV.BCB.PIX")
+    ) {
+
+        titulo.textContent = "💰 PIX";
+
+        conteudo.textContent = textoLido;
+
+        botao.textContent = "Copiar PIX";
+
+        botao.onclick = async () => {
+
+            await navigator.clipboard.writeText(
+                textoLido
+            );
+
+            alert("PIX copiado!");
+        };
+
+        resultado.append(
+            titulo,
+            conteudo,
+            botao
+        );
+    }
+
+    // TEXTO COMUM
+    else {
+
+        titulo.textContent = "📄 Texto";
+
+        conteudo.textContent = textoLido;
+
+        botao.textContent = "Copiar";
+
+        botao.onclick = async () => {
+
+            await navigator.clipboard.writeText(
+                textoLido
+            );
+
+            alert("Texto copiado!");
+        };
+
+        resultado.append(
+            titulo,
+            conteudo,
+            botao
+        );
+    }
+
+    await html5QrCode.stop();
+    scannerAtivo = false;
+}
+);
+scannerAtivo = true;
+});
+
+</script>
+
+</body>
+</html>
 #qrcode{
     margin-top:20px;
     display:flex;
