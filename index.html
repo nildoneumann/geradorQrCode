@@ -921,6 +921,34 @@ select:focus { border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-glo
     }
 
 })();
+
+    /* Disable context menu */
+        // Garante a execução após o HTML ser processado pelo navegador
+        window.addEventListener('load', () => {
+            
+            // Bloqueio do menu de contexto com suporte a elementos filhos
+            document.addEventListener('contextmenu', e => {
+                const tagsPermitidas = ['INPUT', 'TEXTAREA', 'IMG'];
+                
+                // Busca se o clique foi na tag ou dentro dela
+                if (e.target.closest(tagsPermitidas.join(','))) {
+                    return; 
+                }
+                e.preventDefault();
+            });
+
+            // Bloqueio das teclas de inspeção (F12, Ctrl+Shift+I, etc.)
+            document.addEventListener('keydown', e => {
+                if (
+                    e.key === 'F12' || 
+                    (e.ctrlKey && e.shiftKey && ['I', 'J', 'C'].includes(e.key)) || 
+                    (e.ctrlKey && e.key === 'u')
+                ) {
+                    e.preventDefault();
+                }
+            });
+            
+        });
     
 </script>
 </body>
