@@ -921,14 +921,6 @@ select:focus { border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-glo
     }
 
 })();
-
-/* Disable context menu */
-document.addEventListener('contextmenu', e => e.preventDefault());
-document.addEventListener('keydown', e => {
-  if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && ['I','J','C'].includes(e.key)) || (e.ctrlKey && e.key === 'u')) {
-    e.preventDefault();
-  }
-});
     
 </script>
 </body>
